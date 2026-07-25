@@ -1,8 +1,8 @@
 # frontend-frameworks
 
-এই trial series-এর root README — প্রতিটি framework trial-এর জন্য এটি একমাত্র source of truth। Findings জমা হওয়ার সাথে সাথে spec টি evolve হয়। Time-box: প্রতি framework-এর জন্য 2 ঘণ্টা, সর্বোচ্চ 15 মিনিট overflow-সহ।
+Root README for this trial series — the single source of truth every framework trial follows. Spec evolves as findings accumulate. Time-box: 2 hours per framework, with up to 15 min overflow.
 
-## Initial project setup (একবার করুন, কোনো trial শুরুর আগে)
+## Initial project setup (do this once, before any trial)
 
 ```bash
 mkdir frontend-frameworks
@@ -11,40 +11,40 @@ git init
 mkdir api
 ```
 
-- এই `README.md` ফাইলটি `frontend-frameworks/` root-এ থাকে — পুরো trial series-এর single source of truth
-- প্রতিটি framework নিজের sibling folder পায় (`svelte/`, `vue/`, `solid/`, `qwik/`, `htmx/`, `react/`) — এগুলি আগে থেকে তৈরি না, বরং সেই framework-এর trial শুরু করার সময় scaffold command-এর মাধ্যমে তৈরি হয় (নিচের Per-framework setup দেখুন)। Trial folder-গুলোর মধ্যে কোনো shared code বা config নেই।
-- ঐচ্ছিক: root-এ একটি `.gitignore` যোগ করুন (`node_modules`, `dist`, `.env`) যাতে প্রতি trial-এ বারবার না লিখতে হয়:
+- This `README.md` file lives at `frontend-frameworks/` root — the single source of truth for the whole trial series
+- Each framework gets its own sibling folder (`svelte/`, `vue/`, `solid/`, `qwik/`, `htmx/`, `react/`) — created fresh at the start of that framework's trial via its scaffold command (see Per-framework setup below), not upfront. No shared code or config between trial folders.
+- Optional: add a root `.gitignore` (`node_modules`, `dist`, `.env`) so it's not repeated per trial:
   ```bash
   echo -e "node_modules\ndist\n.env" > .gitignore
   ```
-- **Commit convention:** প্রতি trial-এ একটি commit, README লেখার সময় (trial শেষ হলে বা time-box শেষ হলে) — message format `<framework>: trial complete`। এটি পরবর্তীতে প্রতি framework-এর diffable checkpoint হিসেবে কাজ করবে।
-- `api/` folder এবং shared backend-এর জন্য নিচের Setup section দেখুন
+- **Commit convention:** one commit per trial, made at README-write time (once the trial is done/time-boxed out) — message format `<framework>: trial complete`. This gives you a diffable checkpoint per framework later if you want to compare how much got built in the time box.
+- For the `api/` folder and shared backend, see the Setup section directly below
 
-## Trial order (এই sequence অনুসরণ করুন)
+## Trial order (follow this sequence)
 
-Base frameworks আগে — এখানেই বেশিরভাগ trial time দেওয়া উচিত, কারণ এটি core reactivity model পরীক্ষা করে যা বেশিরভাগ dashboard-এর ভিত্তি:
+Base frameworks first — this is where most trial time should go, since it tests the core reactivity model most dashboards actually depend on:
 
 1. Svelte
 2. Vue
 3. SolidJS
-4. Qwik *(lower priority — এর প্রধান value, low hydration cost, login wall-এর পিছনে কম গুরুত্বপূর্ণ)*
+4. Qwik *(lower priority — its main value, low hydration cost, matters less behind a login wall)*
 5. htmx
-6. React *(baseline — সবশেষে তৈরি করা হয়, যাতে অন্যান্য সব framework-এর সাথে direct comparison-এর জন্য fresh থাকে)*
+6. React *(baseline — built last, so it's fresh in mind for direct comparison against everything else)*
 
-Meta-frameworks — low priority, সব base-framework trial শেষ হওয়ার পর, এবং শুধুমাত্র সেই base framework-এর জন্য যেটি আপনার favorite হবে (সেই trial-এর README verdict অনুযায়ী)।
+Meta-frameworks — low priority, deferred until after all base-framework trials, and only for whichever base framework becomes your favorite (per that trial's README verdict).
 
-**API contract base-framework trials জুড়ে frozen থাকে।** `items` schema এবং endpoint contract প্রথম trial-এর শুরুতে lock হয় এবং পুরো base-framework series জুড়ে অপরিবর্তিত থাকে। Spec শুধুমাত্র meta-framework trials-এ evolve হতে পারে, যদি থাকে।
+**API contract is frozen during base-framework trials.** The `items` schema and endpoint contract lock at the start of the first trial and remain unchanged across the entire base-framework series. The spec may evolve only during meta-framework trials, if any.
 
-## Setup — shared backend (initial setup-এর অংশ, একবার তৈরি করুন, প্রতি trial-এ পুনরায় ব্যবহার করুন)
+## Setup — shared backend (part of initial setup, build once, reuse for every trial)
 
-- **json-server v1 (beta)** ব্যবহার করা হচ্ছে — pinned to `1.0.0-beta.15`, লেখার সময় সর্বশেষ beta। v1-এ old v0.x line-এর তুলনায় real breaking changes আছে: ids সবসময় string হয় (omit করলে auto-generated হয়), pagination `_per_page`+`_page` ব্যবহার করে (old `_limit`-এর পরিবর্তে), relations `_embed` ব্যবহার করে (`_expand`-এর পরিবর্তে), এবং `--delay` সরিয়ে দেওয়া হয়েছে (পরিবর্তে browser DevTools network throttling ব্যবহার করুন)। v0 এবং v1 syntax মিশাবেন না — এই spec-এর basic CRUD endpoints-এর জন্য এর কোনো গুরুত্ব নেই, তবে আরও explore করলে জানা দরকারী।
-- **`--watch` behavior v1 beta-এর জন্য sources জুড়ে অস্পষ্ট এবং পরস্পরবিরোধী** — official README এটিকে flag হিসেবে list করে না, কিন্তু কমপক্ষে একটি third-party guide দাবি করে যে এটি omit করলে `db.json`-এর edit (যেমন trials-এর মধ্যে manual reset) server restart ছাড়া生效 হবে না। কোনো source-ই blindly trust করবেন না — প্রথমবার server boot করার সময় নিজে verify করুন:
-  1. Server start করুন (নিচের command)
-  2. `db.json` hand-edit করুন চলমান অবস্থায় (একটি title পরিবর্তন করুন)
-  3. `GET /items` hit করে দেখুন edit টি restart ছাড়া দেখা যাচ্ছে কিনা
-  - যদি automatically reflect না করে, তাহলে প্রতি বার `db.json` reset করার পর manually server restart করুন, এবং নিচের command-এ `--watch` যোগ করে দেখুন এটি সাহায্য করে কিনা।
-- `api/`-এর ভিতরে নিচের seed content দিয়ে `db.json` তৈরি করুন, তারপর `frontend-frameworks/api/` থেকে `json-server` run করুন
-- একটি data model, যার নাম `items` (মনে রাখবেন: v1-এ ids string, number নয়):
+- Using **json-server v1 (beta)** — pinned to `1.0.0-beta.15`, the latest beta as of writing. v1 has real breaking changes vs the old v0.x line: ids are always strings (auto-generated if omitted), pagination uses `_per_page`+`_page` instead of the old `_limit`, relations use `_embed` instead of `_expand`, and `--delay` was removed (use browser DevTools network throttling instead). Don't mix v0 and v1 syntax — none of this matters for this spec's basic CRUD endpoints, but worth knowing if you explore further.
+- **`--watch` behavior is unclear and conflicting across sources for v1 beta** — the official README doesn't list it as a flag at all, but at least one third-party guide claims omitting it means `db.json` edits (e.g. your manual resets between trials) won't be picked up without a server restart. Don't trust either source blindly — verify it yourself the first time you boot the server:
+  1. Start the server (command below)
+  2. Hand-edit `db.json` while it's running (change a title)
+  3. Hit `GET /items` and check if the edit shows up without restarting
+  - If it doesn't reflect automatically, restart the server manually every time you reset `db.json` between trials, and add `--watch` to the command below to test if it helps.
+- Create `db.json` inside `api/` with the seed content below, then run `json-server` against it, from `frontend-frameworks/api/`
+- One data model, called `items` (note: ids are strings in v1, not numbers):
 ```json
 {
   "items": [
@@ -53,58 +53,58 @@ Meta-frameworks — low priority, সব base-framework trial শেষ হও�
   ]
 }
 ```
-- কোনো install প্রয়োজন নেই — `bunx` এটি dependency হিসেবে না যোগ করেই সরাসরি run করে
-- একবার run করুন, পুরো trial series-এর জন্য চালু রাখুন:
+- No install needed — `bunx` runs it directly without adding it as a dependency
+- Run once, leave running for the whole trial series:
   ```bash
   bunx json-server@1.0.0-beta.15 db.json --port 3001
   ```
-  (উপরে `--watch` নোট দেখুন — empirically verify করুন যে `db.json` edit করার পর restart প্রয়োজন কিনা, অথবা `--watch` যোগ করুন যদি flag টি এখনও কাজ করে)
-- আপনি যে endpoints ব্যবহার করবেন: `GET /items`, `POST /items`, `PATCH /items/:id`, `DELETE /items/:id`, `GET /items/:id`
-- **প্রতিটি নতুন framework trial-এর আগে, fresh random seed দিয়ে `db.json` regenerate করুন** — একই schema, প্রতিবার ভিন্ন items। এটি trial-to-trial carryover প্রতিরোধ করে এবং প্রতিটি framework কেমন varying seed states handle করে তা পরীক্ষা করে। Regenerate করার পর, server restart করুন যদি `--watch` verification দেখায় যে edits live reflect হয় না।
+  (see the `--watch` note above — verify empirically whether you need to restart after editing `db.json`, or add `--watch` if the flag turns out to still work)
+- Endpoints you'll use: `GET /items`, `POST /items`, `PATCH /items/:id`, `DELETE /items/:id`, `GET /items/:id`
+- **Before each new framework trial, regenerate `db.json` with a fresh random seed** — same schema, different items each time. This prevents trial-to-trial carryover and tests how each framework handles varying seed states. After regenerating, restart the server if the `--watch` verification showed edits don't reflect live.
 
-**Feature completion bar:** একটি feature complete বলে ধরা হবে যখন এটি **functional completeness**-এ পৌঁছায় — browser-এ correctly কাজ করে, basic error handling আছে, এবং কোনো known bug নেই। Styling polish, animations, বা production hardening প্রয়োজন নেই।
+**Feature completion bar:** A feature is complete when it reaches **functional completeness** — it works correctly in the browser with basic error handling and no known bugs. No styling polish, animations, or production hardening is required.
 
-## Features (এই order-এ তৈরি করুন — সময় শেষ হলে অবিলম্বে বন্ধ করুন)
+## Features (build in this order — stop immediately if time runs out)
 
-**Part A — operations-সহ (mutation, dashboard-style):**
-1. **List items** — `GET /items` থেকে fetch, list render, fetching অবস্থায় loading state দেখান
-2. **Add an item** — form input + submit → `POST /items` → list update, pending indicator দেখান
-3. **Toggle done** — checkbox/click → `PATCH /items/:id` → UI-তে reflect, pending indicator দেখান
-4. **Delete an item** — button → `DELETE /items/:id` → UI থেকে remove, pending indicator দেখান
-5. **Edit an item's title** — inline edit (double-click বা edit button) → `PATCH /items/:id`, pending indicator দেখান
-6. **Filter view** — All / Active / Done (client-side, কোনো API call প্রয়োজন নেই)
-7. **Derived count** — বর্তমান items থেকে "X items left" computed (reactivity/computed values পরীক্ষা করে)
+**Part A — with operations (mutation, dashboard-style):**
+1. **List items** — fetch from `GET /items`, render list, show loading state while fetching
+2. **Add an item** — form input + submit → `POST /items` → update list, show pending indicator
+3. **Toggle done** — checkbox/click → `PATCH /items/:id` → reflect in UI, show pending indicator
+4. **Delete an item** — button → `DELETE /items/:id` → remove from UI, show pending indicator
+5. **Edit an item's title** — inline edit (double-click or edit button) → `PATCH /items/:id`, show pending indicator
+6. **Filter view** — All / Active / Done (client-side, no API call needed)
+7. **Derived count** — "X items left" computed from current items (tests reactivity/computed values)
 
-**Mutation loading/pending state — সব mutation features-এর জন্য required।** Items 1–5-এর সবকটিতে async operation-এর সময় visible loading বা pending indicators থাকতে হবে। Initial list fetch (item 1)-এ loading state দেখাতে হবে। Items 2–5 (add, toggle, delete, edit)-এ mutation-এর সময় pending বা optimistic UI state দেখাতে হবে। এটি প্রতিটি framework-এর async ergonomics আরও গভীরভাবে পরীক্ষা করে — fire-and-update vs fire-and-refetch কতটা naturally handle করে?
+**Mutation loading/pending state — required for all mutation features.** Items 1–5 all require visible loading or pending indicators during their async operations. The initial list fetch (item 1) must show a loading state. Items 2–5 (add, toggle, delete, edit) must also show a pending or optimistic UI state during the mutation. This tests each framework's async ergonomics more deeply — how naturally does it handle fire-and-update vs fire-and-refetch?
 
-**Part B — operations ছাড়া (read-only, public-site-style):**
-8. **Detail route** — list-এ একটি item-এ click → detail view-তে route → `GET /items/:id` fetch, read-only display (এই view-তে edit/delete controls থাকবে না)
-9. **Route params + loader** — detail view URL থেকে `:id` param পড়ে এবং component render-এর আগে loader function-এর মাধ্যমে item fetch করে
-10. **Parallel vs waterfall fetch** — একটি view render করুন যা দুটি independent resource parallel-এ fetch করে (যেমন, item detail + related items list) — প্রতিটি router-এর loader composition patterns পরীক্ষা করতে
-11. **Route guard** — detail route-টি mock auth guard-এর মাধ্যমে protect করুন যা unauthenticated users-কে redirect করবে
-   - প্রতিটি framework-এর **official router** ব্যবহার করুন (manual/hand-rolled solution নয়), যাতে routing friction framework-এর নিজস্ব tooling-কে reflect করে, কোনো ad-hoc implementation নয়:
+**Part B — without operations (read-only, public-site-style):**
+8. **Detail route** — click an item in the list → route to a detail view → fetch `GET /items/:id`, display it read-only (no edit/delete controls on this view)
+9. **Route params + loader** — the detail view reads the `:id` param from the URL and fetches the item via a loader function before the component renders
+10. **Parallel vs waterfall fetch** — render a view that fetches two independent resources in parallel (e.g., item detail + related items list) to test each router's loader composition patterns
+11. **Route guard** — protect the detail route with a mock auth guard that redirects unauthenticated users away
+   - Use each framework's **official router** (not a manual/hand-rolled solution), so routing friction reflects the framework's own tooling, not an ad-hoc implementation:
      | Framework | Router |
      |---|---|
-     | Svelte | `svelte-routing` বা SvelteKit-এর built-in router (যদি পরে SvelteKit ব্যবহার করেন) — plain Svelte-এর জন্য `svelte-routing` |
+     | Svelte | `svelte-routing` or SvelteKit's built-in router if you end up using it later — for plain Svelte, `svelte-routing` |
      | Vue | `vue-router` |
      | SolidJS | `@solidjs/router` |
-     | Qwik | Qwik City-র built-in router (framework-এর সাথে আসে) |
-     | htmx | N/A — htmx `hx-get`/`hx-target`-এর মাধ্যমে content swap করে, কোনো client router নেই; দুটি static page বা একটি page with swapped fragment ব্যবহার করুন |
+     | Qwik | Qwik City's built-in router (comes with the framework) |
+     | htmx | N/A — htmx swaps content via `hx-get`/`hx-target`, no client router; use two static pages or one page with a swapped fragment |
      | React | `react-router` |
 
-## Explicitly OUT of scope (এগুলি তৈরি করবেন না)
+## Explicitly OUT of scope (do not build)
 
-- Styling/CSS polish বেয়ার usability-এর বাইরে
-- Authentication (item 11-এর জন্য mock auth guard ঠিক আছে, real auth out of scope)
-- Real backend, database, বা deployment
+- Styling/CSS polish beyond bare usability
+- Authentication (mock auth guard for item 11 is fine, real auth is out)
+- Real backend, database, or deployment
 - Tests
 - Animations/transitions
 - Mobile responsiveness
-- Error boundary polish (basic try/catch বা error message যথেষ্ট)
+- Error boundary polish (a basic try/catch or error message is enough)
 
-## Per-trial README template — build করার পরপরই প্রতিটি trial-এর নিজস্ব folder-এ লিখুন
+## Per-trial README template — write one in every trial's own folder, right after building
 
-Stop time-এর সাথেসাথেই impressions sections লিখুন (liked, disliked, async, routing ইত্যাদি) — friction/delight fresh থাকতে। **Verdict** পরের দিন পূরণ করুন — KEEP / CROSS-OFF / SECOND-LOOK সিদ্ধান্ত নেওয়ার আগে impressions-গুলিকে রাতভর settle হতে দিন।
+Write the impressions sections immediately at stop time (liked, disliked, async, routing, etc.) while the friction/delight is fresh. Fill in the **Verdict** the next day — let impressions settle overnight before deciding KEEP / CROSS-OFF / SECOND-LOOK.
 
 ```md
 # <Framework Name> — Trial
@@ -150,15 +150,15 @@ Stop time-এর সাথেসাথেই impressions sections লিখু�
 | Svelte | SvelteKit |
 | SolidJS | SolidStart |
 | Qwik | Qwik City |
-| Astro | N/A — public-site slot-এর জন্য বিবেচিত, এই trial series-এর অংশ নয় (framework-agnostic shell/meta-layer) |
-| htmx | N/A (যেকোনো server-rendered backend-এর সাথে paired) |
+| Astro | N/A — considered for the public-site slot, not part of this trial series (framework-agnostic shell/meta-layer itself) |
+| htmx | N/A (pairs with any server-rendered backend) |
 
-**Favorite framework** হল highest-ranked KEEP, যা (a) time-to-complete, (b) syntax ergonomics, এবং (c) growth potential — এই তিনটি equal-weight composite-এর মাধ্যমে নির্ধারিত, কোনো single metric নয়। Composite টি advisory (কোন calculated formula নয়) — এটি প্রতিরোধ করার জন্য যে কোনো একটি শক্তিশালী impression পুরো ছবিকে overriding না করে।
+**Favorite framework** is the highest-ranked KEEP, determined by an equal-weight composite of (a) time-to-complete, (b) syntax ergonomics, and (c) growth potential — not a single metric. The composite is advisory (not a calculated formula) — it exists to prevent any one strong impression from overriding the full picture.
 
 ## Conventions used in every trial
 
-- **Package manager: Bun** — `bun create`, `bun install`, `bun run dev` (npm equivalents-এর পরিবর্তে)
-- **Import alias:** `@/*` → `./src/*` in every trial's config, যাতে imports `../../components/ItemList`-এর পরিবর্তে `@/components/ItemList` পড়ে। প্রতিটি framework-এর config-এ যোগ করুন:
+- **Package manager: Bun** — `bun create`, `bun install`, `bun run dev` instead of the npm equivalents
+- **Import alias:** `@/*` → `./src/*` in every trial's config, so imports read `@/components/ItemList` instead of `../../components/ItemList`. Add to each framework's config:
   - Vite-based (Svelte, Vue, Solid, React): in `vite.config.ts`
     ```ts
     import path from "path";
@@ -170,39 +170,39 @@ Stop time-এর সাথেসাথেই impressions sections লিখু�
     ```json
     { "compilerOptions": { "paths": { "@/*": ["./src/*"] } } }
     ```
-  - Qwik: same `tsconfig.json` paths entry; Qwik-এর Vite config একই `resolve.alias` block accept করে
-  - htmx: skip — কোনো build step নেই, কোনো bundler নেই, alias প্রযোজ্য নয়
+  - Qwik: same `tsconfig.json` paths entry; Qwik's Vite config accepts the same `resolve.alias` block
+  - htmx: skip — no build step, no bundler, alias doesn't apply
 
-## Per-framework setup (প্রতি trial-এর জন্য এই pattern পুনরাবৃত্তি করুন)
+## Per-framework setup (repeat this pattern for every trial)
 
 ### 1. Svelte
 
 ```bash
-# frontend-frameworks/ root থেকে
+# from frontend-frameworks/ root
 bun create vite svelte --template svelte-ts
 cd svelte
 bun install
 ```
 
-- Confirm করুন shared API চলছে (উপরের Setup section দেখুন) এবং `db.json` fresh seed দিয়ে regenerate করা হয়েছে
-- Svelte dev server start করুন:
+- Confirm the shared API is running (see Setup section above) and `db.json` has been regenerated with a fresh seed
+- Start the Svelte dev server:
   ```bash
   bun run dev
   ```
-- `@/*` alias যোগ করুন `vite.config.ts` এবং `tsconfig.json`-এ (উপরের Conventions দেখুন)
-- Data fetch করুন `http://localhost:3001/items` থেকে
-- এই folder-এ `README.md` তৈরি করুন উপরের Per-trial README template ব্যবহার করে (impressions এখন লিখুন, verdict আগামীকাল)
-- Features-order-এ build করুন (Features section দেখুন): Part A items 1–7, তারপর Part B items 8–11
-- Time-box: 2 ঘণ্টা। 2 ঘণ্টার mark-এ, চলমান feature শেষ করতে সর্বোচ্চ 15 মিনিট overflow দিন, তারপর বন্ধ করুন এবং README লিখুন।
+- Add the `@/*` alias to `vite.config.ts` and `tsconfig.json` (see Conventions above)
+- Fetch data from `http://localhost:3001/items`
+- Create `README.md` in this folder using the Per-trial README template above (write impressions now, verdict tomorrow)
+- Build features in order (see Features section): Part A items 1–7, then Part B items 8–11
+- Time-box: 2 hours. At the 2-hour mark, allow up to 15 minutes overflow to finish an in-progress feature, then stop and write the README.
 
-### প্রতিটি বাকি framework-এর জন্য পুনরাবৃত্তি করুন
+### Repeat for each remaining framework
 
-একই steps, শুধু scaffold command পরিবর্তিত হবে (এখনও Bun, এখনও `@/*` alias যোগ করুন):
+Same steps, swapped scaffolding command only (still Bun, still add the `@/*` alias):
 
 | Framework | Scaffold command |
 |---|---|
 | Vue | `bun create vite vue --template vue-ts` |
 | SolidJS | `bun create vite solid --template solid-ts` |
-| Qwik | `bun create qwik@latest` (empty app নির্বাচন করুন, `qwik/` folder-এ) |
-| htmx | কোনো scaffold নেই — plain `htmx/index.html` + `bunx serve`, CDN থেকে htmx script, কোনো alias নেই |
+| Qwik | `bun create qwik@latest` (choose empty app, into `qwik/` folder) |
+| htmx | No scaffold — plain `htmx/index.html` + `bunx serve`, htmx script via CDN, no alias |
 | React | `bun create vite react --template react-ts` |
