@@ -1,4 +1,4 @@
-# frontend-frameworks
+# frontend-frameworks [(See English Translation)](./readme.md)
 
 এই trial series-এর root README — প্রতিটি framework trial-এর জন্য এটি একমাত্র source of truth। Findings জমা হওয়ার সাথে সাথে spec টি evolve হয়। Time-box: প্রতি framework-এর জন্য 2 ঘণ্টা, সর্বোচ্চ 15 মিনিট overflow-সহ।
 
