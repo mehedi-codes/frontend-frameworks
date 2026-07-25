@@ -1,4 +1,4 @@
-# frontend-frameworks
+# frontend-frameworks [(বাংলা অনুবাদ দেখুন)](./readme.bn.md)
 
 Root README for this trial series — the single source of truth every framework trial follows. Spec evolves as findings accumulate. Time-box: 2 hours per framework, with up to 15 min overflow.
 
