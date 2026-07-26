@@ -1,7 +1,9 @@
 {
   "private": true,
   "scripts": {
-    "server": "json-server api/db.json"
+    "server": "json-server api/db.json",
+    "server:5000": "json-server api/db.json --port 5000",
+    "server:8080": "json-server api/db.json --port 8080"
   },
   "devDependencies": {
     "json-server": "1.0.0-beta.15"

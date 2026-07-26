@@ -13,8 +13,8 @@ git init
 - This `README.md` file lives at `frontend-frameworks/` root — the single source of truth for the whole trial series
 - Each framework gets its own sibling folder (`svelte/`, `vue/`, `solid/`, `qwik/`, `htmx/`, `react/`) — created fresh at the start of that framework's trial via its scaffold command (see Per-framework setup below), not upfront. No shared code or config between trial folders.
 - Optional: add a root `.gitignore` (`node_modules`, `dist`, `.env`) so it's not repeated per trial:
-  ```bash
-  echo -e "node_modules\ndist\n.env" > .gitignore
+  ```powershell
+  "node_modules", "dist", ".env" | Set-Content .gitignore
   ```
 - **Commit convention:** one commit per trial, made at README-write time (once the trial is done/time-boxed out) — message format `<framework>: trial complete`. This gives you a diffable checkpoint per framework later if you want to compare how much got built in the time box.
 
@@ -32,9 +32,10 @@ Create `db.json` inside `api/` with the seed content below:
 
 ```json
 {
+  "$schema": "./node_modules/json-server/schema.json",
   "items": [
-    { "id": "1", "title": "First item", "done": false, "description": "The first test item" },
-    { "id": "2", "title": "Second item", "done": true, "description": "The second test item" }
+    { "id": "1", "title": "First item", "description": "The first test item", "done": false },
+    { "id": "2", "title": "Second item", "description": "The second test item", "done": true }
   ]
 }
 ```
@@ -45,7 +46,7 @@ Start the server (from `frontend-frameworks/` root):
 bun run server
 ```
 
-This runs `json-server api/db.json --port 3000`. JSON Server 1+ watches for file changes by default, so no `--watch` flag needed.
+Starts JSON Server on `http://localhost:3000`. JSON Server 1+ watches for file changes by default, so no `--watch` flag needed.
 
 Leave this terminal running. Open a second terminal for the framework trial.
 
@@ -53,6 +54,108 @@ Leave this terminal running. Open a second terminal for the framework trial.
 - Endpoints you'll use: `GET /items`, `POST /items`, `PATCH /items/:id`, `DELETE /items/:id`, `GET /items/:id`
 - **Before each new framework trial, regenerate `db.json` with a fresh random seed** — same schema, different items each time. Prevents trial-to-trial carryover and tests each framework against varying seed states. No server restart needed — JSON Server 1+ detects changes automatically.
 - v1 beta notes: ids are strings (auto-generated if omitted), pagination uses `_per_page`+`_page` instead of `_limit`, `--delay` was removed (use browser DevTools network throttling instead). Don't mix v0 and v1 syntax.
+
+
+<details>
+<summary>Full json-server usage guide</summary>
+
+### Routes
+
+For array resources like `items`:
+
+```
+GET    /items
+GET    /items/:id
+POST   /items
+PUT    /items/:id
+PATCH  /items/:id
+DELETE /items/:id
+```
+
+### Query params
+
+**Conditions** — `field:operator=value`:
+
+| Operator  | Meaning                                  |
+| --------- | ---------------------------------------- |
+| (none)    | equal (`eq`)                             |
+| `lt`      | less than                                |
+| `lte`     | less than or equal                       |
+| `gt`      | greater than                             |
+| `gte`     | greater than or equal                    |
+| `eq`      | equal                                    |
+| `ne`      | not equal                                |
+| `in`      | included in comma-separated list         |
+| `contains`| string contains (case-insensitive)       |
+| `startsWith`| string starts with (case-insensitive)  |
+| `endsWith`| string ends with (case-insensitive)      |
+
+Examples:
+```
+GET /items?views:gt=100
+GET /items?title:contains=hello
+GET /items?id:in=1,2,3
+GET /items?title:startsWith=Hello
+```
+
+**Sort:**
+```
+GET /items?_sort=-views
+GET /items?_sort=title
+GET /items?_sort=author.name,-views
+```
+
+**Pagination:**
+```
+GET /items?_page=1&_per_page=25
+```
+
+Response:
+```json
+{
+  "first": 1,
+  "prev": null,
+  "next": 2,
+  "last": 4,
+  "pages": 4,
+  "items": 100,
+  "data": [ { "id": "1", "title": "...", "views": 100 } ]
+}
+```
+
+`_per_page` defaults to `10`. Invalid values are normalized.
+
+**Embed related resources:**
+```
+GET /items?_embed=comments
+```
+
+**Complex filter with `_where`:**
+```
+GET /items?_where={"or":[{"views":{"gt":100}},{"author":{"name":{"lt":"m"}}}]}
+```
+
+### Delete dependents
+
+```
+DELETE /items/1?_dependent=comments
+```
+
+### Static files
+
+JSON Server automatically serves files from `./public`. To serve additional directories:
+```
+json-server db.json -s ./static
+```
+
+### Migration notes (v0 → v1)
+
+- **ID handling:** `id` is always a string, auto-generated if omitted
+- **Pagination:** Use `_per_page` + `_page` instead of deprecated `_limit`
+- **Relationships:** Use `_embed` instead of `_expand`
+- **Request delays:** Use browser DevTools (Network tab > throttling) instead of removed `--delay`
+
+</details>
 
 ## Trial order (follow this sequence)
 

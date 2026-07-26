@@ -13,8 +13,8 @@ git init
 - এই `README.md` ফাইলটি `frontend-frameworks/` root-এ থাকে — পুরো trial series-এর single source of truth
 - প্রতিটি framework নিজের sibling folder পায় (`svelte/`, `vue/`, `solid/`, `qwik/`, `htmx/`, `react/`) — এগুলি আগে থেকে তৈরি না, বরং সেই framework-এর trial শুরু করার সময় scaffold command-এর মাধ্যমে তৈরি হয় (নিচের Per-framework setup দেখুন)। Trial folder-গুলোর মধ্যে কোনো shared code বা config নেই।
 - ঐচ্ছিক: root-এ একটি `.gitignore` যোগ করুন (`node_modules`, `dist`, `.env`) যাতে প্রতি trial-এ বারবার না লিখতে হয়:
-  ```bash
-  echo -e "node_modules\ndist\n.env" > .gitignore
+  ```powershell
+  "node_modules", "dist", ".env" | Set-Content .gitignore
   ```
 - **Commit convention:** প্রতি trial-এ একটি commit, README লেখার সময় (trial শেষ হলে বা time-box শেষ হলে) — message format `<framework>: trial complete`। এটি পরবর্তীতে প্রতি framework-এর diffable checkpoint হিসেবে কাজ করবে।
 
@@ -32,9 +32,10 @@ mkdir api
 
 ```json
 {
+  "$schema": "./node_modules/json-server/schema.json",
   "items": [
-    { "id": "1", "title": "First item", "done": false, "description": "The first test item" },
-    { "id": "2", "title": "Second item", "done": true, "description": "The second test item" }
+    { "id": "1", "title": "First item", "description": "The first test item", "done": false },
+    { "id": "2", "title": "Second item", "description": "The second test item", "done": true }
   ]
 }
 ```
@@ -45,7 +46,7 @@ Server start করুন (`frontend-frameworks/` root থেকে):
 bun run server
 ```
 
-এটি `json-server api/db.json --port 3000` run করে। JSON Server 1+ ডিফল্টভাবেই file changes watch করে, তাই `--watch` flag-এর প্রয়োজন নেই।
+এটি JSON Server কে `http://localhost:3000`-এ start করে। JSON Server 1+ ডিফল্টভাবেই file changes watch করে, তাই `--watch` flag-এর প্রয়োজন নেই।
 
 এই terminal টি চালু রাখুন। Framework trial-এর জন্য একটি দ্বিতীয় terminal খুলুন।
 
@@ -53,6 +54,108 @@ bun run server
 - আপনি যে endpoints ব্যবহার করবেন: `GET /items`, `POST /items`, `PATCH /items/:id`, `DELETE /items/:id`, `GET /items/:id`
 - **প্রতিটি নতুন framework trial-এর আগে, fresh random seed দিয়ে `db.json` regenerate করুন** — একই schema, প্রতিবার ভিন্ন items। এটি trial-to-trial carryover প্রতিরোধ করে। Server restart-এর প্রয়োজন নেই — JSON Server 1+ automatically changes detect করে।
 - v1 beta notes: ids string হয় (omit করলে auto-generated), pagination `_per_page`+`_page` ব্যবহার করে (`_limit`-এর পরিবর্তে), `--delay` সরিয়ে দেওয়া হয়েছে (পরিবর্তে browser DevTools network throttling ব্যবহার করুন)। v0 এবং v1 syntax মিশাবেন না।
+
+
+<details>
+<summary>সম্পূর্ণ json-server ব্যবহার নির্দেশিকা</summary>
+
+### Routes
+
+`items`-এর মতো array resources-এর জন্য:
+
+```
+GET    /items
+GET    /items/:id
+POST   /items
+PUT    /items/:id
+PATCH  /items/:id
+DELETE /items/:id
+```
+
+### Query params
+
+**Conditions** — `field:operator=value`:
+
+| Operator      | Meaning                                |
+| ------------- | -------------------------------------- |
+| (none)        | equal (`eq`)                           |
+| `lt`          | less than                              |
+| `lte`         | less than or equal                     |
+| `gt`          | greater than                           |
+| `gte`         | greater than or equal                  |
+| `eq`          | equal                                  |
+| `ne`          | not equal                              |
+| `in`          | included in comma-separated list       |
+| `contains`    | string contains (case-insensitive)     |
+| `startsWith`  | string starts with (case-insensitive)  |
+| `endsWith`    | string ends with (case-insensitive)    |
+
+Examples:
+```
+GET /items?views:gt=100
+GET /items?title:contains=hello
+GET /items?id:in=1,2,3
+GET /items?title:startsWith=Hello
+```
+
+**Sort:**
+```
+GET /items?_sort=-views
+GET /items?_sort=title
+GET /items?_sort=author.name,-views
+```
+
+**Pagination:**
+```
+GET /items?_page=1&_per_page=25
+```
+
+Response:
+```json
+{
+  "first": 1,
+  "prev": null,
+  "next": 2,
+  "last": 4,
+  "pages": 4,
+  "items": 100,
+  "data": [ { "id": "1", "title": "...", "views": 100 } ]
+}
+```
+
+`_per_page` ডিফল্ট `10`। Invalid values automatically normalized হয়।
+
+**Embed related resources:**
+```
+GET /items?_embed=comments
+```
+
+**Complex filter with `_where`:**
+```
+GET /items?_where={"or":[{"views":{"gt":100}},{"author":{"name":{"lt":"m"}}}]}
+```
+
+### Delete dependents
+
+```
+DELETE /items/1?_dependent=comments
+```
+
+### Static files
+
+JSON Server automatically `./public` directory থেকে files serve করে। Additional directories serve করতে:
+```
+json-server db.json -s ./static
+```
+
+### Migration notes (v0 → v1)
+
+- **ID handling:** `id` সবসময় string, omit করলে auto-generated
+- **Pagination:** `_per_page` + `_page` ব্যবহার করুন (`_limit` deprecated)
+- **Relationships:** `_embed` ব্যবহার করুন (`_expand`-এর পরিবর্তে)
+- **Request delays:** browser DevTools ব্যবহার করুন (Network tab > throttling) — `--delay` সরিয়ে দেওয়া হয়েছে
+
+</details>
 
 ## Trial order (এই sequence অনুসরণ করুন)
 
