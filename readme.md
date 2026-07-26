@@ -45,13 +45,13 @@ Start the server (from `frontend-frameworks/` root):
 bun run server
 ```
 
-This runs `json-server --watch api/db.json --port 3001`. The `--watch` flag is included so edits to `db.json` are picked up without restart — verify this empirically the first time you run it (edit a title, hit `GET /items`, check if the change appears). If `--watch` doesn't work in v1 beta, remove it from `package.json` `"scripts"`.
+This runs `json-server api/db.json --port 3000`. JSON Server 1+ watches for file changes by default, so no `--watch` flag needed.
 
 Leave this terminal running. Open a second terminal for the framework trial.
 
 - One data model, called `items` (ids are strings in v1, not numbers)
 - Endpoints you'll use: `GET /items`, `POST /items`, `PATCH /items/:id`, `DELETE /items/:id`, `GET /items/:id`
-- **Before each new framework trial, regenerate `db.json` with a fresh random seed** — same schema, different items each time. Prevents trial-to-trial carryover and tests each framework against varying seed states. After regenerating, restart the server if `--watch` verification showed edits don't reflect live.
+- **Before each new framework trial, regenerate `db.json` with a fresh random seed** — same schema, different items each time. Prevents trial-to-trial carryover and tests each framework against varying seed states. No server restart needed — JSON Server 1+ detects changes automatically.
 - v1 beta notes: ids are strings (auto-generated if omitted), pagination uses `_per_page`+`_page` instead of `_limit`, `--delay` was removed (use browser DevTools network throttling instead). Don't mix v0 and v1 syntax.
 
 ## Trial order (follow this sequence)
@@ -205,7 +205,7 @@ bun install
   bun run dev
   ```
 - Add the `@/*` alias to `vite.config.ts` and `tsconfig.json` (see Conventions above)
-- Fetch data from `http://localhost:3001/items`
+- Fetch data from `http://localhost:3000/items`
 - Create `README.md` in this folder using the Per-trial README template above (write impressions now, verdict tomorrow)
 - Build features in order (see Features section): Part A items 1–7, then Part B items 8–11
 - Time-box: 2 hours. At the 2-hour mark, allow up to 15 minutes overflow to finish an in-progress feature, then stop and write the README.

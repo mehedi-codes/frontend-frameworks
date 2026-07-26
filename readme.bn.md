@@ -45,13 +45,13 @@ Server start করুন (`frontend-frameworks/` root থেকে):
 bun run server
 ```
 
-এটি `json-server --watch api/db.json --port 3001` run করে। `--watch` flag অন্তর্ভুক্ত করা হয়েছে যাতে `db.json`-এর edit restart ছাড়াই生效 হয় — প্রথমবার run করার সময় empirically verify করুন (একটি title edit করুন, `GET /items` hit করুন, change দেখা যাচ্ছে কিনা)। যদি `--watch` v1 beta-তে কাজ না করে, তাহলে `package.json`-এর `"scripts"` থেকে এটি সরিয়ে ফেলুন।
+এটি `json-server api/db.json --port 3000` run করে। JSON Server 1+ ডিফল্টভাবেই file changes watch করে, তাই `--watch` flag-এর প্রয়োজন নেই।
 
 এই terminal টি চালু রাখুন। Framework trial-এর জন্য একটি দ্বিতীয় terminal খুলুন।
 
 - একটি data model, যার নাম `items` (v1-এ ids string, number নয়)
 - আপনি যে endpoints ব্যবহার করবেন: `GET /items`, `POST /items`, `PATCH /items/:id`, `DELETE /items/:id`, `GET /items/:id`
-- **প্রতিটি নতুন framework trial-এর আগে, fresh random seed দিয়ে `db.json` regenerate করুন** — একই schema, প্রতিবার ভিন্ন items। এটি trial-to-trial carryover প্রতিরোধ করে। Regenerate করার পর, server restart করুন যদি `--watch` verification দেখায় যে edits live reflect হয় না।
+- **প্রতিটি নতুন framework trial-এর আগে, fresh random seed দিয়ে `db.json` regenerate করুন** — একই schema, প্রতিবার ভিন্ন items। এটি trial-to-trial carryover প্রতিরোধ করে। Server restart-এর প্রয়োজন নেই — JSON Server 1+ automatically changes detect করে।
 - v1 beta notes: ids string হয় (omit করলে auto-generated), pagination `_per_page`+`_page` ব্যবহার করে (`_limit`-এর পরিবর্তে), `--delay` সরিয়ে দেওয়া হয়েছে (পরিবর্তে browser DevTools network throttling ব্যবহার করুন)। v0 এবং v1 syntax মিশাবেন না।
 
 ## Trial order (এই sequence অনুসরণ করুন)
@@ -205,7 +205,7 @@ bun install
   bun run dev
   ```
 - `@/*` alias যোগ করুন `vite.config.ts` এবং `tsconfig.json`-এ (উপরের Conventions দেখুন)
-- Data fetch করুন `http://localhost:3001/items` থেকে
+- Data fetch করুন `http://localhost:3000/items` থেকে
 - এই folder-এ `README.md` তৈরি করুন উপরের Per-trial README template ব্যবহার করে (impressions এখন লিখুন, verdict আগামীকাল)
 - Features-order-এ build করুন (Features section দেখুন): Part A items 1–7, তারপর Part B items 8–11
 - Time-box: 2 ঘণ্টা। 2 ঘণ্টার mark-এ, চলমান feature শেষ করতে সর্বোচ্চ 15 মিনিট overflow দিন, তারপর বন্ধ করুন এবং README লিখুন।

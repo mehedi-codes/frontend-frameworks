@@ -1,0 +1,7 @@
+{
+  "$schema": "./node_modules/json-server/schema.json",
+  "items": [
+     { "id": "1", "title": "First item", "description": "The first test item", "done": false },
+     { "id": "2", "title": "Second item", "description": "The second test item", "done": true }
+   ]
+}

@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "server": "json-server --watch api/db.json --port 3000"
+    "server": "json-server api/db.json"
   },
   "devDependencies": {
     "json-server": "1.0.0-beta.15"
