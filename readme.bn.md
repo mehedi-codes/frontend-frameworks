@@ -174,36 +174,67 @@ Meta-frameworks — low priority, সব base-framework trial শেষ হও�
 
 **Feature completion bar:** একটি feature complete বলে ধরা হবে যখন এটি **functional completeness**-এ পৌঁছায় — browser-এ correctly কাজ করে, basic error handling আছে, এবং কোনো known bug নেই। Styling polish, animations, বা production hardening প্রয়োজন নেই।
 
-## Features (এই order-এ তৈরি করুন — সময় শেষ হলে অবিলম্বে বন্ধ করুন)
+## Pages
 
-**Part A — operations-সহ (mutation, dashboard-style):**
+| Page | Route | Protected | Description |
+|---|---|---|---|
+| Login | `/login` | না | কালো centered button → spinner → auto-redirect to `/` |
+| Dashboard | `/` | **হ্যাঁ** | Table, search, sort, pagination, metrics, filter |
+| Create item | `/items/new` | **হ্যাঁ** | Empty form → `POST /items` |
+| View item | `/items/:id` | **হ্যাঁ** | Read-only display |
+| Edit item | `/items/edit/:id` | **হ্যাঁ** | Pre-filled form → `PATCH /items/:id` |
 
-1. **List items** — `GET /items` থেকে fetch, list render, fetching অবস্থায় loading state দেখান
-2. **Add an item** — form input + submit → `POST /items` → list update, pending indicator দেখান
-3. **Toggle done** — checkbox/click → `PATCH /items/:id` → UI-তে reflect, pending indicator দেখান
-4. **Delete an item** — button → `DELETE /items/:id` → UI থেকে remove, pending indicator দেখান
-5. **Edit an item's title** — inline edit (double-click বা edit button) → `PATCH /items/:id`, pending indicator দেখান
-6. **Filter view** — All / Active / Done (client-side, কোনো API call প্রয়োজন নেই)
-7. **Derived count** — বর্তমান items থেকে "X items left" computed (reactivity/computed values পরীক্ষা করে)
+`/login` ছাড়া সব routes `/login`-এ redirect করবে যদি authenticated না থাকে। Navbar-এ logout button দেখা যাবে logged in অবস্থায়।
 
-**Mutation loading/pending state — সব mutation features-এর জন্য required।** Items 1–5-এর সবকটিতে async operation-এর সময় visible loading বা pending indicators থাকতে হবে। Initial list fetch (item 1)-এ loading state দেখাতে হবে। Items 2–5 (add, toggle, delete, edit)-এ mutation-এর সময় pending বা optimistic UI state দেখাতে হবে। এটি প্রতিটি framework-এর async ergonomics আরও গভীরভাবে পরীক্ষা করে — fire-and-update vs fire-and-refetch কতটা naturally handle করে?
+## Build order (সময় শেষ হলে অবিলম্বে বন্ধ করুন)
 
-**Part B — operations ছাড়া (read-only, public-site-style):** 8. **Detail route** — list-এ একটি item-এ click → detail view-তে route → `GET /items/:id` fetch, read-only display (এই view-তে edit/delete controls থাকবে না) 9. **Route params + loader** — detail view URL থেকে `:id` param পড়ে এবং component render-এর আগে loader function-এর মাধ্যমে item fetch করে 10. **Parallel vs waterfall fetch** — একটি view render করুন যা দুটি independent resource parallel-এ fetch করে (যেমন, item detail + related items list) — প্রতিটি router-এর loader composition patterns পরীক্ষা করতে 11. **Route guard** — detail route-টি mock auth guard-এর মাধ্যমে protect করুন যা unauthenticated users-কে redirect করবে
+**Items 1–3-এর জন্য loading states required** (list fetch, toggle, delete)। `isAuthenticated` framework-এর reactive primitive-এ store করুন (state/ref/signal/store)। `login()` এবং `logout()` functions এটি update করে।
 
-- প্রতিটি framework-এর **official router** ব্যবহার করুন (manual/hand-rolled solution নয়), যাতে routing friction framework-এর নিজস্ব tooling-কে reflect করে, কোনো ad-hoc implementation নয়:
-  | Framework | Router                                                                                                                                                |
-  | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-  | Svelte    | `svelte-routing` বা SvelteKit-এর built-in router (যদি পরে SvelteKit ব্যবহার করেন) — plain Svelte-এর জন্য `svelte-routing`                             |
-  | Vue       | `vue-router`                                                                                                                                          |
-  | SolidJS   | `@solidjs/router`                                                                                                                                     |
-  | Qwik      | Qwik City-র built-in router (framework-এর সাথে আসে)                                                                                                   |
-  | htmx      | N/A — htmx `hx-get`/`hx-target`-এর মাধ্যমে content swap করে, কোনো client router নেই; দুটি static page বা একটি page with swapped fragment ব্যবহার করুন |
-  | React     | `react-router`                                                                                                                                        |
+### Part A — Dashboard (`/`)
+
+1. **List items** — `GET /items` → table render, fetching অবস্থায় loading state
+2. **Toggle done** — checkbox per row → `PATCH /items/:id` → UI-তে reflect, pending indicator
+3. **Delete item** — trash icon → confirmation dialog → `DELETE /items/:id` → remove from UI, pending
+4. **Metric cards** — table-এর উপরে 4 cards: total items, done count, not done count, deleted counter (session-only, delete-এ locally increment হয়, page reload-এ reset)
+5. **Filter** — All / Active / Done buttons (client-side, কোনো API call নয়)
+6. **Search** — text input → `GET /items?title:contains=` (input-এ refetch)
+7. **Sort** — column header click → `GET /items?_sort=` (asc/desc toggle with `-` prefix)
+8. **Pagination** — `GET /items?_page=&_per_page=10`। Table footer: "N–M of total T" left, prev/next right
+
+### Part B — Item form + Auth
+
+9. **Dynamic item form** — single component routes। Route pattern অনুযায়ী mode:
+   - `/items/new` → empty form → `POST /items` → redirect to `/`
+   - `/items/:id` → `GET /items/:id` → read-only display
+   - `/items/edit/:id` → `GET /items/:id` → pre-filled form → `PATCH /items/:id` → redirect to `/`
+10. **Route guard** — `/login` ছাড়া সব routes `/login`-এ redirect করবে যদি `isAuthenticated` false হয়
+11. **Login / Logout** — `/login`-এ কালো centered "Login" button। Click → spinner (async delay) → `isAuthenticated = true` → redirect to `/`। Navbar-এ "Logout" authenticated pages-এ। Click → auth clear → redirect to `/login`।
+
+## Layout (non-scored decoration, framework logic নেই)
+
+- **Navbar:** Framework name left, logout button right
+- **Add button:** Table-এর উপরে → navigates to `/items/new`
+- **Table row actions:** View icon → `/items/:id`, Edit icon → `/items/edit/:id`, Delete icon → confirmation dialog
+- **Table footer:** Range "N–M of total T" left, prev/next right
+- **Footer:** "Built by Mehedi Hasan" left, GitHub link to `/framework-name/` right
+
+## Router reference
+
+প্রতিটি framework-এর **official router** ব্যবহার করুন (hand-rolled solution নয়):
+
+| Framework | Router |
+|---|---|
+| Svelte | `svelte-routing` বা SvelteKit-এর built-in router |
+| Vue | `vue-router` |
+| SolidJS | `@solidjs/router` |
+| Qwik | Qwik City-র built-in router |
+| htmx | N/A — swaps via `hx-get`/`hx-target`, কোনো client router নেই |
+| React | `react-router` |
 
 ## Explicitly OUT of scope (এগুলি তৈরি করবেন না)
 
 - Styling/CSS polish বেয়ার usability-এর বাইরে
-- Authentication (item 11-এর জন্য mock auth guard ঠিক আছে, real auth out of scope)
+- Authentication (items 10–11-এর জন্য mock auth ঠিক আছে, real auth out of scope)
 - Real backend, database, বা deployment
 - Tests
 - Animations/transitions

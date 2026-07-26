@@ -174,36 +174,67 @@ Meta-frameworks — low priority, deferred until after all base-framework trials
 
 **Feature completion bar:** A feature is complete when it reaches **functional completeness** — it works correctly in the browser with basic error handling and no known bugs. No styling polish, animations, or production hardening is required.
 
-## Features (build in this order — stop immediately if time runs out)
+## Pages
 
-**Part A — with operations (mutation, dashboard-style):**
+| Page | Route | Protected | Description |
+|---|---|---|---|
+| Login | `/login` | No | Black centered button → spinner → auto-redirect to `/` |
+| Dashboard | `/` | **Yes** | Table, search, sort, pagination, metrics, filter |
+| Create item | `/items/new` | **Yes** | Empty form → `POST /items` |
+| View item | `/items/:id` | **Yes** | Read-only display |
+| Edit item | `/items/edit/:id` | **Yes** | Pre-filled form → `PATCH /items/:id` |
 
-1. **List items** — fetch from `GET /items`, render list, show loading state while fetching
-2. **Add an item** — form input + submit → `POST /items` → update list, show pending indicator
-3. **Toggle done** — checkbox/click → `PATCH /items/:id` → reflect in UI, show pending indicator
-4. **Delete an item** — button → `DELETE /items/:id` → remove from UI, show pending indicator
-5. **Edit an item's title** — inline edit (double-click or edit button) → `PATCH /items/:id`, show pending indicator
-6. **Filter view** — All / Active / Done (client-side, no API call needed)
-7. **Derived count** — "X items left" computed from current items (tests reactivity/computed values)
+All routes except `/login` redirect to `/login` if not authenticated. Top-right navbar shows logout button when logged in.
 
-**Mutation loading/pending state — required for all mutation features.** Items 1–5 all require visible loading or pending indicators during their async operations. The initial list fetch (item 1) must show a loading state. Items 2–5 (add, toggle, delete, edit) must also show a pending or optimistic UI state during the mutation. This tests each framework's async ergonomics more deeply — how naturally does it handle fire-and-update vs fire-and-refetch?
+## Build order (stop immediately if time runs out)
 
-**Part B — without operations (read-only, public-site-style):** 8. **Detail route** — click an item in the list → route to a detail view → fetch `GET /items/:id`, display it read-only (no edit/delete controls on this view) 9. **Route params + loader** — the detail view reads the `:id` param from the URL and fetches the item via a loader function before the component renders 10. **Parallel vs waterfall fetch** — render a view that fetches two independent resources in parallel (e.g., item detail + related items list) to test each router's loader composition patterns 11. **Route guard** — protect the detail route with a mock auth guard that redirects unauthenticated users away
+**Loading states required for items 1–3** (list fetch, toggle, delete). Store `isAuthenticated` in whatever reactive primitive the framework provides (state/ref/signal/store). `login()` and `logout()` functions update it.
 
-- Use each framework's **official router** (not a manual/hand-rolled solution), so routing friction reflects the framework's own tooling, not an ad-hoc implementation:
-  | Framework | Router                                                                                                                        |
-  | --------- | ----------------------------------------------------------------------------------------------------------------------------- |
-  | Svelte    | `svelte-routing` or SvelteKit's built-in router if you end up using it later — for plain Svelte, `svelte-routing`             |
-  | Vue       | `vue-router`                                                                                                                  |
-  | SolidJS   | `@solidjs/router`                                                                                                             |
-  | Qwik      | Qwik City's built-in router (comes with the framework)                                                                        |
-  | htmx      | N/A — htmx swaps content via `hx-get`/`hx-target`, no client router; use two static pages or one page with a swapped fragment |
-  | React     | `react-router`                                                                                                                |
+### Part A — Dashboard (`/`)
+
+1. **List items** — `GET /items` → render table, show loading state while fetching
+2. **Toggle done** — checkbox per row → `PATCH /items/:id` → reflect in UI, show pending indicator
+3. **Delete item** — trash icon → confirmation dialog → `DELETE /items/:id` → remove from UI, show pending
+4. **Metric cards** — 4 cards above the table: total items, done count, not done count, deleted counter (session-only, increments locally on delete, resets on page reload)
+5. **Filter** — All / Active / Done buttons (client-side, no API call)
+6. **Search** — text input → `GET /items?title:contains=` (refetches on input)
+7. **Sort** — click column header → `GET /items?_sort=` (toggle asc/desc with `-` prefix)
+8. **Pagination** — `GET /items?_page=&_per_page=10`. Table footer: "N–M of total T" left, prev/next right
+
+### Part B — Item form + Auth
+
+9. **Dynamic item form** — single component routes. Mode from route pattern:
+   - `/items/new` → empty form → `POST /items` → redirect to `/`
+   - `/items/:id` → `GET /items/:id` → read-only display
+   - `/items/edit/:id` → `GET /items/:id` → pre-filled form → `PATCH /items/:id` → redirect to `/`
+10. **Route guard** — all routes except `/login` redirect to `/login` if `isAuthenticated` is false
+11. **Login / Logout** — `/login` shows black centered "Login" button. Click → spinner (async delay) → `isAuthenticated = true` → redirect to `/`. Navbar shows "Logout" on authenticated pages. Click → clear auth → redirect to `/login`.
+
+## Layout (non-scored decoration, no framework logic)
+
+- **Navbar:** Framework name left, logout button right
+- **Add button:** Above table → navigates to `/items/new`
+- **Table row actions:** View icon → `/items/:id`, Edit icon → `/items/edit/:id`, Delete icon → confirmation dialog
+- **Table footer:** Range "N–M of total T" left, prev/next right
+- **Footer:** "Built by Mehedi Hasan" left, GitHub link to `/framework-name/` right
+
+## Router reference
+
+Use each framework's **official router** (not a hand-rolled solution):
+
+| Framework | Router |
+|---|---|
+| Svelte | `svelte-routing` or SvelteKit's built-in router |
+| Vue | `vue-router` |
+| SolidJS | `@solidjs/router` |
+| Qwik | Qwik City's built-in router |
+| htmx | N/A — swaps via `hx-get`/`hx-target`, no client router |
+| React | `react-router` |
 
 ## Explicitly OUT of scope (do not build)
 
 - Styling/CSS polish beyond bare usability
-- Authentication (mock auth guard for item 11 is fine, real auth is out)
+- Authentication (mock auth for items 10–11 is fine, real auth is out)
 - Real backend, database, or deployment
 - Tests
 - Animations/transitions
