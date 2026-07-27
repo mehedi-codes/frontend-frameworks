@@ -1,0 +1,23 @@
+/*@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;700&family=Space+Mono&family=Work+Sans:wght@100..900&display=swap');*/
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+@import "tailwindcss";
+
+/*:root {
+  color-scheme: light dark;
+}*/
+
+@theme {
+    --color-orange: #ff3f00;
+    --color-black: #1d1d1f;
+
+    /*--font-sans: "Work Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-serif: "IBM Plex Serif", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;*/
+    --font-mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+    /*--color-background: light-dark(#ffffff, #1d1d1f);
+    --color-foreground: light-dark(#1d1d1f, #ffffff);*/
+}
+
+body {
+    @apply font-mono bg-white text-black;
+}
